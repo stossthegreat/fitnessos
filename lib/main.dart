@@ -47,22 +47,21 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _checkOnboarding();
+    _navigateToHome();
   }
 
-  Future<void> _checkOnboarding() async {
+  Future<void> _navigateToHome() async {
     // Small delay for splash effect
     await Future.delayed(const Duration(milliseconds: 500));
     
+    // TODO: Re-enable onboarding later
+    // For now, create a default user and go straight to home
     final storage = await StorageService.getInstance();
-    final hasCompletedOnboarding = storage.hasCompletedOnboarding;
-
+    
     if (mounted) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => hasCompletedOnboarding
-              ? const HomeScreen()
-              : const OnboardingMain(),
+          builder: (_) => const HomeScreen(),
         ),
       );
     }

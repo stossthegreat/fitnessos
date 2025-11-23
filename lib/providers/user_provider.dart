@@ -20,7 +20,21 @@ class UserNotifier extends StateNotifier<UserModel?> {
 
   Future<void> _loadUser() async {
     final storage = await ref.read(storageServiceProvider.future);
-    state = storage.getUser();
+    final savedUser = storage.getUser();
+    
+    // If no user exists, create a default one for testing
+    if (savedUser == null) {
+      state = UserModel(
+        name: 'Demo User',
+        age: 28,
+        weight: 185.0,
+        targetWeight: 175.0,
+        goalMode: GoalMode.cut,
+        equipmentMode: EquipmentMode.bodyweight,
+      );
+    } else {
+      state = savedUser;
+    }
   }
 
   Future<void> updateUser(UserModel user) async {
