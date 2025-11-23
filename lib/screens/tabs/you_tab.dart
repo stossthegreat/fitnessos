@@ -214,9 +214,7 @@ class YouTab extends ConsumerWidget {
               ),
               border: Border.all(color: AppColors.rose500.withOpacity(0.2)),
             ),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Column(
+            child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -269,7 +267,6 @@ class YouTab extends ConsumerWidget {
                   ),
                 ],
               ),
-            ),
           ),
           const SizedBox(height: 24),
 
@@ -311,10 +308,7 @@ class YouTab extends ConsumerWidget {
         color: AppColors.black60,
         border: Border.all(color: AppColors.white10),
       ),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: child,
-      ),
+      child: child,
     );
   }
 

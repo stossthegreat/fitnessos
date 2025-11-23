@@ -379,9 +379,7 @@ class FuelTab extends ConsumerWidget {
               ),
               border: Border.all(color: AppColors.indigo300.withOpacity(0.2)),
             ),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Column(
+            child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -414,7 +412,6 @@ class FuelTab extends ConsumerWidget {
                   ),
                 ],
               ),
-            ),
           ),
         ],
       ),
@@ -429,10 +426,7 @@ class FuelTab extends ConsumerWidget {
         color: AppColors.black60,
         border: Border.all(color: AppColors.white10),
       ),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: child,
-      ),
+      child: child,
     );
   }
 

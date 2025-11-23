@@ -467,10 +467,7 @@ class TrainTab extends ConsumerWidget {
         color: AppColors.black60,
         border: Border.all(color: AppColors.white10),
       ),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: child,
-      ),
+      child: child,
     );
   }
 
