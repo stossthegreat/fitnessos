@@ -89,17 +89,14 @@ class FuelTab extends ConsumerWidget {
                         child: Container(
                           width: 40,
                           height: 40,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             shape: BoxShape.circle,
                             color: AppColors.black30,
                           ),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                            child: const Icon(
-                              Icons.apple,
-                              color: Colors.white70,
-                              size: 20,
-                            ),
+                          child: const Icon(
+                            Icons.apple,
+                            color: Colors.white70,
+                            size: 20,
                           ),
                         ),
                       ),
