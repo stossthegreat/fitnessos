@@ -10,20 +10,16 @@ class RepCounterService {
     String exercise,
     String currentPhase,
   ) {
-    // Calculate key angle based on exercise
     double angle = _calculateKeyAngle(pose, exercise);
     
     if (angle == 0) {
       return {'repCompleted': false, 'nextPhase': currentPhase};
     }
     
-    // Detect phase transition
     bool repCompleted = false;
     String nextPhase = currentPhase;
     
     if (exercise == 'Push-ups' || exercise == 'Bench Press') {
-      // Down = elbow bent (< 90°)
-      // Up = elbow extended (> 160°)
       if (currentPhase == 'down' && angle > 160) {
         nextPhase = 'up';
       } else if (currentPhase == 'up' && angle < 90) {
@@ -31,8 +27,6 @@ class RepCounterService {
         repCompleted = true;
       }
     } else if (exercise == 'Squats') {
-      // Down = knee bent (< 100°)
-      // Up = knee extended (> 160°)
       if (currentPhase == 'down' && angle > 160) {
         nextPhase = 'up';
       } else if (currentPhase == 'up' && angle < 100) {
@@ -40,8 +34,6 @@ class RepCounterService {
         repCompleted = true;
       }
     } else if (exercise == 'Bicep Curls') {
-      // Down = elbow extended (> 160°)
-      // Up = elbow bent (< 50°)
       if (currentPhase == 'down' && angle < 50) {
         nextPhase = 'up';
       } else if (currentPhase == 'up' && angle > 160) {
@@ -64,7 +56,6 @@ class RepCounterService {
     final landmarks = pose.landmarks;
     
     if (exercise == 'Push-ups' || exercise == 'Bench Press') {
-      // Right elbow angle
       final shoulder = landmarks[PoseLandmarkType.rightShoulder];
       final elbow = landmarks[PoseLandmarkType.rightElbow];
       final wrist = landmarks[PoseLandmarkType.rightWrist];
@@ -73,7 +64,6 @@ class RepCounterService {
       
       return _calculateAngle(shoulder, elbow, wrist);
     } else if (exercise == 'Squats') {
-      // Right knee angle
       final hip = landmarks[PoseLandmarkType.rightHip];
       final knee = landmarks[PoseLandmarkType.rightKnee];
       final ankle = landmarks[PoseLandmarkType.rightAnkle];
@@ -82,7 +72,6 @@ class RepCounterService {
       
       return _calculateAngle(hip, knee, ankle);
     } else if (exercise == 'Bicep Curls') {
-      // Right elbow angle
       final shoulder = landmarks[PoseLandmarkType.rightShoulder];
       final elbow = landmarks[PoseLandmarkType.rightElbow];
       final wrist = landmarks[PoseLandmarkType.rightWrist];
