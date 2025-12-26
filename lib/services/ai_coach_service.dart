@@ -13,7 +13,6 @@ class AICoachService {
   ) async {
     _frameCount++;
     
-    // Only analyze every 30 frames to save processing
     if (_frameCount % 30 != 0) {
       return {
         'cue': _lastCue,
@@ -22,9 +21,7 @@ class AICoachService {
       };
     }
     
-    // Analyze form based on exercise
     final analysis = _analyzeExerciseForm(pose, exercise, phase);
-    
     _lastCue = analysis['cue'] ?? '';
     
     return {
@@ -42,7 +39,6 @@ class AICoachService {
     final landmarks = pose.landmarks;
     
     if (exercise == 'Push-ups') {
-      // Check alignment
       final leftShoulder = landmarks[PoseLandmarkType.leftShoulder];
       final leftHip = landmarks[PoseLandmarkType.leftHip];
       final leftKnee = landmarks[PoseLandmarkType.leftKnee];
@@ -51,20 +47,18 @@ class AICoachService {
         return {'cue': 'Get in frame', 'score': 0.0, 'speak': false};
       }
       
-      // Check if body is straight (shoulder-hip-knee alignment)
       final shoulderHipDist = (leftShoulder.y - leftHip.y).abs();
       final hipKneeDist = (leftHip.y - leftKnee.y).abs();
       final ratio = shoulderHipDist / (hipKneeDist + 0.001);
       
       if (ratio < 0.6) {
         return {
-          'cue': 'Keep your core tight - body straight',
+          'cue': 'Keep your core tight',
           'score': 65.0,
           'speak': true,
         };
       }
       
-      // Check elbow position
       final rightShoulder = landmarks[PoseLandmarkType.rightShoulder];
       final rightElbow = landmarks[PoseLandmarkType.rightElbow];
       
@@ -81,7 +75,7 @@ class AICoachService {
       }
       
       return {
-        'cue': 'Good form - keep it up',
+        'cue': 'Good form',
         'score': 90.0,
         'speak': false,
       };
@@ -94,38 +88,31 @@ class AICoachService {
         return {'cue': 'Get in frame', 'score': 0.0, 'speak': false};
       }
       
-      // Check knee position (shouldn't go past toes)
       if (leftKnee.x > leftAnkle.x + 0.05) {
         return {
-          'cue': 'Knees behind toes - sit back',
+          'cue': 'Knees behind toes',
           'score': 65.0,
           'speak': true,
         };
       }
       
-      // Check depth
-      final kneeAngle = _calculateAngle(
-        leftHip,
-        leftKnee,
-        leftAnkle,
-      );
+      final kneeAngle = _calculateAngle(leftHip, leftKnee, leftAnkle);
       
       if (phase == 'down' && kneeAngle > 120) {
         return {
-          'cue': 'Go deeper - parallel or below',
+          'cue': 'Go deeper',
           'score': 70.0,
           'speak': false,
         };
       }
       
       return {
-        'cue': 'Strong squat - drive through heels',
+        'cue': 'Strong squat',
         'score': 88.0,
         'speak': false,
       };
     }
     
-    // Default
     return {
       'cue': 'Keep going',
       'score': 75.0,
@@ -134,7 +121,6 @@ class AICoachService {
   }
   
   double _calculateFormScore(Pose pose, String exercise) {
-    // Simplified scoring
     final analysis = _analyzeExerciseForm(pose, exercise, 'up');
     return analysis['score'] ?? 75.0;
   }
