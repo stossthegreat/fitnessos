@@ -3,7 +3,7 @@ import '../utils/app_colors.dart';
 import '../utils/text_styles.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/train_tab.dart';
-import 'tabs/fuel_tab.dart';
+import 'tabs/camera_tab.dart';
 import 'tabs/you_tab.dart';
 import 'settings_screen.dart';
 
@@ -20,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _tabs = const [
     HomeTab(),
     TrainTab(),
-    FuelTab(),
+    CameraTab(),
     YouTab(),
   ];
 
