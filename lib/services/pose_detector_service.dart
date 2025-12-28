@@ -2,6 +2,7 @@ import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'package:camera/camera.dart';
 import 'dart:typed_data';
 import 'dart:ui' show Size;
+import 'dart:io' show Platform;
 
 /// Service for detecting human poses using Google ML Kit
 /// Processes camera frames and returns skeleton landmarks
@@ -10,9 +11,9 @@ class PoseDetectorService {
   bool _isProcessing = false;
 
   PoseDetectorService() {
-    // Initialize with accurate mode for best tracking
+    // Initialize with stream mode for real-time video
     final options = PoseDetectorOptions(
-      mode: PoseDetectionMode.stream, // Optimized for video streams
+      mode: PoseDetectionMode.stream,
     );
     _poseDetector = PoseDetector(options: options);
   }
@@ -60,41 +61,111 @@ class PoseDetectorService {
   /// Convert CameraImage to InputImage for ML Kit processing
   InputImage? _convertCameraImage(CameraImage image) {
     try {
-      // Build image bytes from planes
-      final allBytes = BytesBuilder();
-      for (final Plane plane in image.planes) {
-        allBytes.add(plane.bytes);
+      // Determine rotation based on platform
+      // Front camera typically needs 270° on Android, 0° or 90° on iOS
+      InputImageRotation imageRotation;
+      if (Platform.isAndroid) {
+        imageRotation = InputImageRotation.rotation270deg;
+      } else {
+        imageRotation = InputImageRotation.rotation0deg;
       }
-      final bytes = allBytes.toBytes();
 
-      // Get image size
       final Size imageSize = Size(
         image.width.toDouble(),
         image.height.toDouble(),
       );
 
-      // Front camera usually needs 270° rotation, back needs 90°
-      // Try 270 first for front camera
-      const InputImageRotation imageRotation = InputImageRotation.rotation270deg;
+      // Android uses YUV_420_888, need to convert to NV21
+      if (Platform.isAndroid) {
+        return _convertYUV420ToInputImage(image, imageSize, imageRotation);
+      } else {
+        // iOS uses BGRA format
+        return _convertBGRAToInputImage(image, imageSize, imageRotation);
+      }
+    } catch (e) {
+      print('❌ Error converting camera image: $e');
+      return null;
+    }
+  }
 
-      // Get format
-      const InputImageFormat inputImageFormat = InputImageFormat.yuv_420_888;
+  /// Convert YUV_420_888 (Android) to NV21 format for ML Kit
+  InputImage? _convertYUV420ToInputImage(
+    CameraImage image,
+    Size imageSize,
+    InputImageRotation rotation,
+  ) {
+    try {
+      final int width = image.width;
+      final int height = image.height;
+      
+      final int yRowStride = image.planes[0].bytesPerRow;
+      final int uvRowStride = image.planes[1].bytesPerRow;
+      final int uvPixelStride = image.planes[1].bytesPerPixel ?? 1;
 
-      // Build metadata
+      // NV21 format: Y plane followed by interleaved VU
+      final int ySize = width * height;
+      final int uvSize = width * height ~/ 2;
+      final Uint8List nv21 = Uint8List(ySize + uvSize);
+
+      // Copy Y plane
+      final Uint8List yPlane = image.planes[0].bytes;
+      int yIndex = 0;
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          nv21[yIndex++] = yPlane[y * yRowStride + x];
+        }
+      }
+
+      // Interleave V and U planes (NV21 is VUVU...)
+      final Uint8List uPlane = image.planes[1].bytes;
+      final Uint8List vPlane = image.planes[2].bytes;
+      
+      int uvIndex = ySize;
+      for (int y = 0; y < height ~/ 2; y++) {
+        for (int x = 0; x < width ~/ 2; x++) {
+          final int uvOffset = y * uvRowStride + x * uvPixelStride;
+          nv21[uvIndex++] = vPlane[uvOffset]; // V first for NV21
+          nv21[uvIndex++] = uPlane[uvOffset]; // U second
+        }
+      }
+
       final metadata = InputImageMetadata(
         size: imageSize,
-        rotation: imageRotation,
-        format: inputImageFormat,
-        bytesPerRow: image.planes[0].bytesPerRow,
+        rotation: rotation,
+        format: InputImageFormat.nv21,
+        bytesPerRow: width,
       );
 
-      // Create InputImage
       return InputImage.fromBytes(
-        bytes: bytes,
+        bytes: nv21,
         metadata: metadata,
       );
     } catch (e) {
-      print('❌ Error converting camera image: $e');
+      print('❌ Error converting YUV420: $e');
+      return null;
+    }
+  }
+
+  /// Convert BGRA (iOS) to InputImage
+  InputImage? _convertBGRAToInputImage(
+    CameraImage image,
+    Size imageSize,
+    InputImageRotation rotation,
+  ) {
+    try {
+      final metadata = InputImageMetadata(
+        size: imageSize,
+        rotation: rotation,
+        format: InputImageFormat.bgra8888,
+        bytesPerRow: image.planes[0].bytesPerRow,
+      );
+
+      return InputImage.fromBytes(
+        bytes: image.planes[0].bytes,
+        metadata: metadata,
+      );
+    } catch (e) {
+      print('❌ Error converting BGRA: $e');
       return null;
     }
   }
