@@ -7,96 +7,85 @@ import '../utils/app_colors.dart';
 class SkeletonPainter extends CustomPainter {
   final List<PoseLandmark>? landmarks;
   final Size imageSize;
+  final bool isFrontCamera;
 
   SkeletonPainter({
     required this.landmarks,
     required this.imageSize,
+    this.isFrontCamera = true, // Default to front camera
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     if (landmarks == null || landmarks!.isEmpty) {
-      print('⚠️ SkeletonPainter: No landmarks to draw');
       return;
     }
-
-    print('🎨 SkeletonPainter: Drawing ${landmarks!.length} landmarks on canvas ${size.width}x${size.height}');
-    print('📐 Image size: ${imageSize.width}x${imageSize.height}');
 
     // Paint for lines (Electric Cyan with glow)
     final linePaint = Paint()
       ..color = AppColors.electricCyan
-      ..strokeWidth = 6 // Make thicker for visibility
+      ..strokeWidth = 4
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
 
     // Paint for large joints (Cyber Lime with glow) - shoulders, hips
     final largeJointPaint = Paint()
       ..color = AppColors.cyberLime
       ..style = PaintingStyle.fill
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
 
-    // Paint for small joints (Electric Cyan with glow) - wrists, ankles, elbows, knees
+    // Paint for small joints (Electric Cyan with glow)
     final smallJointPaint = Paint()
       ..color = AppColors.electricCyan
       ..style = PaintingStyle.fill
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
 
-    // Helper function to get landmark by type
-    PoseLandmark? getLandmark(PoseLandmarkType type) {
-      try {
-        return landmarks!.firstWhere((landmark) => landmark.type == type);
-      } catch (e) {
-        return null;
-      }
+    // Create a map for quick landmark lookup
+    final Map<PoseLandmarkType, PoseLandmark> landmarkMap = {};
+    for (final landmark in landmarks!) {
+      landmarkMap[landmark.type] = landmark;
     }
 
-    // Helper function to convert landmark position to canvas position
-    Offset? getPosition(PoseLandmark? landmark) {
+    // Helper function to get position with proper scaling and mirroring
+    Offset? getPosition(PoseLandmarkType type) {
+      final landmark = landmarkMap[type];
       if (landmark == null) return null;
-      // Scale from image coordinates to canvas coordinates
-      final x = landmark.x * size.width / imageSize.width;
-      final y = landmark.y * size.height / imageSize.height;
-      
-      // Debug first shoulder position
-      if (landmark.type == PoseLandmarkType.leftShoulder) {
-        print('👉 Left shoulder: landmark(${landmark.x}, ${landmark.y}) -> canvas($x, $y)');
+
+      // Scale coordinates from image space to canvas space
+      double x = landmark.x * size.width / imageSize.width;
+      double y = landmark.y * size.height / imageSize.height;
+
+      // Mirror X for front camera (selfie mode)
+      if (isFrontCamera) {
+        x = size.width - x;
       }
-      
+
       return Offset(x, y);
     }
 
-    // Helper function to draw line between two landmarks
+    // Helper to draw line between two landmarks
     void drawLine(PoseLandmarkType type1, PoseLandmarkType type2) {
-      final landmark1 = getLandmark(type1);
-      final landmark2 = getLandmark(type2);
-      final pos1 = getPosition(landmark1);
-      final pos2 = getPosition(landmark2);
-
+      final pos1 = getPosition(type1);
+      final pos2 = getPosition(type2);
       if (pos1 != null && pos2 != null) {
         canvas.drawLine(pos1, pos2, linePaint);
       }
     }
 
-    // Helper function to draw joint
+    // Helper to draw joint
     void drawJoint(PoseLandmarkType type, {bool large = false}) {
-      final landmark = getLandmark(type);
-      final pos = getPosition(landmark);
-
+      final pos = getPosition(type);
       if (pos != null) {
-        final radius = large ? 16.0 : 12.0; // Make bigger for visibility
+        final radius = large ? 12.0 : 8.0;
         final paint = large ? largeJointPaint : smallJointPaint;
         canvas.drawCircle(pos, radius, paint);
-        print('✅ Drew joint ${type.name} at $pos');
-      } else {
-        print('❌ No position for joint ${type.name}');
       }
     }
 
-    // DRAW SKELETON CONNECTIONS
+    // === DRAW SKELETON ===
 
-    // Torso connections
+    // Torso
     drawLine(PoseLandmarkType.leftShoulder, PoseLandmarkType.rightShoulder);
     drawLine(PoseLandmarkType.leftShoulder, PoseLandmarkType.leftHip);
     drawLine(PoseLandmarkType.rightShoulder, PoseLandmarkType.rightHip);
@@ -118,15 +107,15 @@ class SkeletonPainter extends CustomPainter {
     drawLine(PoseLandmarkType.rightHip, PoseLandmarkType.rightKnee);
     drawLine(PoseLandmarkType.rightKnee, PoseLandmarkType.rightAnkle);
 
-    // DRAW JOINTS (draw after lines so they appear on top)
+    // === DRAW JOINTS ===
 
-    // Large joints (Cyber Lime) - shoulders and hips
+    // Large joints (Cyber Lime)
     drawJoint(PoseLandmarkType.leftShoulder, large: true);
     drawJoint(PoseLandmarkType.rightShoulder, large: true);
     drawJoint(PoseLandmarkType.leftHip, large: true);
     drawJoint(PoseLandmarkType.rightHip, large: true);
 
-    // Small joints (Electric Cyan) - elbows, wrists, knees, ankles
+    // Small joints (Electric Cyan)
     drawJoint(PoseLandmarkType.leftElbow);
     drawJoint(PoseLandmarkType.rightElbow);
     drawJoint(PoseLandmarkType.leftWrist);
@@ -135,12 +124,13 @@ class SkeletonPainter extends CustomPainter {
     drawJoint(PoseLandmarkType.rightKnee);
     drawJoint(PoseLandmarkType.leftAnkle);
     drawJoint(PoseLandmarkType.rightAnkle);
+
+    // Optional: Draw nose/head indicator
+    drawJoint(PoseLandmarkType.nose, large: true);
   }
 
   @override
   bool shouldRepaint(SkeletonPainter oldDelegate) {
-    // Only repaint if landmarks actually changed
     return oldDelegate.landmarks != landmarks;
   }
 }
-
