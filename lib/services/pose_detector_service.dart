@@ -32,6 +32,7 @@ class PoseDetectorService {
       final inputImage = _convertCameraImage(image);
       if (inputImage == null) {
         _isProcessing = false;
+        print('❌ Failed to convert camera image');
         return null;
       }
 
@@ -42,12 +43,16 @@ class PoseDetectorService {
 
       // Return landmarks from first detected pose
       if (poses.isNotEmpty) {
+        print('✅ Pose detected with ${poses.first.landmarks.length} landmarks');
         return poses.first.landmarks.values.toList();
+      } else {
+        print('⚠️ No poses detected in frame');
       }
 
       return null;
     } catch (e) {
       _isProcessing = false;
+      print('❌ Error detecting pose: $e');
       return null;
     }
   }
@@ -68,8 +73,9 @@ class PoseDetectorService {
         image.height.toDouble(),
       );
 
-      // Get rotation (most phones need 90° rotation)
-      const InputImageRotation imageRotation = InputImageRotation.rotation90deg;
+      // Front camera usually needs 270° rotation, back needs 90°
+      // Try 270 first for front camera
+      const InputImageRotation imageRotation = InputImageRotation.rotation270deg;
 
       // Get format
       const InputImageFormat inputImageFormat = InputImageFormat.yuv_420_888;
@@ -88,6 +94,7 @@ class PoseDetectorService {
         metadata: metadata,
       );
     } catch (e) {
+      print('❌ Error converting camera image: $e');
       return null;
     }
   }

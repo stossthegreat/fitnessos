@@ -84,8 +84,11 @@ class _TrainTabState extends State<TrainTab> with TickerProviderStateMixin {
         return;
       }
 
-      // Use back camera (index 0) or first available
-      final camera = cameras.first;
+      // Use FRONT camera for selfie view
+      final camera = cameras.firstWhere(
+        (camera) => camera.lensDirection == CameraLensDirection.front,
+        orElse: () => cameras.first, // Fallback to first camera
+      );
 
       // Initialize camera controller
       _cameraController = CameraController(
@@ -121,9 +124,14 @@ class _TrainTabState extends State<TrainTab> with TickerProviderStateMixin {
     final landmarks = await _poseDetectorService!.detectPose(image);
     
     if (landmarks != null && mounted) {
+      // Debug: Print landmark count to verify detection
+      debugPrint('✅ POSE DETECTED: ${landmarks.length} landmarks');
       setState(() {
         _landmarks = landmarks;
       });
+    } else if (mounted) {
+      // Debug: No pose detected
+      debugPrint('❌ NO POSE DETECTED');
     }
   }
 
@@ -378,6 +386,27 @@ class _TrainTabState extends State<TrainTab> with TickerProviderStateMixin {
               ),
             ),
           ),
+
+        // DEBUG: Show landmark count indicator
+        Positioned(
+          top: 200,
+          left: 16,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: _landmarks != null ? Colors.green.withOpacity(0.7) : Colors.red.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              _landmarks != null ? '✅ TRACKING: ${_landmarks!.length} points' : '❌ NO POSE DETECTED',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ),
 
         // Screen flash effect
         if (_screenFlash)
