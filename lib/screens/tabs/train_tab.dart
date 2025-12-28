@@ -146,39 +146,7 @@ class _TrainTabState extends State<TrainTab> with TickerProviderStateMixin {
     
     // Initialize camera when workout starts
     _initializeCamera();
-    _startRepCounting();
-  }
-
-  void _startRepCounting() {
-    _repTimer = Timer.periodic(const Duration(milliseconds: 2800), (timer) {
-      if (!_isResting) {
-        final random = DateTime.now().millisecondsSinceEpoch % 100;
-        if (random > 40) {
-          setState(() {
-            _repCount++;
-            _showRepFlash = true;
-            _pulseController.forward(from: 0);
-            
-            if (random > 85) {
-              _formFeedback = 'PERFECT FORM';
-              _screenFlash = true;
-            } else if (random < 50) {
-              _formFeedback = 'ELBOWS IN';
-            }
-          });
-
-          Future.delayed(const Duration(milliseconds: 800), () {
-            if (mounted) {
-              setState(() {
-                _showRepFlash = false;
-                _formFeedback = null;
-                _screenFlash = false;
-              });
-            }
-          });
-        }
-      }
-    });
+    // NO MORE SIMULATION - real rep counting will happen via pose detection in Phase 2
   }
 
   void _finishSet() {
@@ -205,7 +173,7 @@ class _TrainTabState extends State<TrainTab> with TickerProviderStateMixin {
             _currentSet = 1;
           }
         });
-        _startRepCounting();
+        // NO MORE SIMULATION - Phase 2 will add real rep counting
       }
     });
   }
@@ -869,7 +837,7 @@ class _TrainTabState extends State<TrainTab> with TickerProviderStateMixin {
                       _isResting = false;
                       _repCount = 0;
                     });
-                    _startRepCounting();
+                    // NO MORE SIMULATION
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(

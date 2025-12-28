@@ -16,28 +16,32 @@ class SkeletonPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (landmarks == null || landmarks!.isEmpty) {
+      print('⚠️ SkeletonPainter: No landmarks to draw');
       return;
     }
+
+    print('🎨 SkeletonPainter: Drawing ${landmarks!.length} landmarks on canvas ${size.width}x${size.height}');
+    print('📐 Image size: ${imageSize.width}x${imageSize.height}');
 
     // Paint for lines (Electric Cyan with glow)
     final linePaint = Paint()
       ..color = AppColors.electricCyan
-      ..strokeWidth = 3
+      ..strokeWidth = 6 // Make thicker for visibility
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
 
     // Paint for large joints (Cyber Lime with glow) - shoulders, hips
     final largeJointPaint = Paint()
       ..color = AppColors.cyberLime
       ..style = PaintingStyle.fill
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
 
     // Paint for small joints (Electric Cyan with glow) - wrists, ankles, elbows, knees
     final smallJointPaint = Paint()
       ..color = AppColors.electricCyan
       ..style = PaintingStyle.fill
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
 
     // Helper function to get landmark by type
     PoseLandmark? getLandmark(PoseLandmarkType type) {
@@ -54,6 +58,12 @@ class SkeletonPainter extends CustomPainter {
       // Scale from image coordinates to canvas coordinates
       final x = landmark.x * size.width / imageSize.width;
       final y = landmark.y * size.height / imageSize.height;
+      
+      // Debug first shoulder position
+      if (landmark.type == PoseLandmarkType.leftShoulder) {
+        print('👉 Left shoulder: landmark(${landmark.x}, ${landmark.y}) -> canvas($x, $y)');
+      }
+      
       return Offset(x, y);
     }
 
@@ -75,9 +85,12 @@ class SkeletonPainter extends CustomPainter {
       final pos = getPosition(landmark);
 
       if (pos != null) {
-        final radius = large ? 8.0 : 6.0;
+        final radius = large ? 16.0 : 12.0; // Make bigger for visibility
         final paint = large ? largeJointPaint : smallJointPaint;
         canvas.drawCircle(pos, radius, paint);
+        print('✅ Drew joint ${type.name} at $pos');
+      } else {
+        print('❌ No position for joint ${type.name}');
       }
     }
 
